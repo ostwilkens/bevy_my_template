@@ -1,9 +1,10 @@
 use bevy::{
-    app::{AppExit, RunFixedUpdateLoop},
+    app::{AppExit},
     math::vec3,
     prelude::*,
     sprite::MaterialMesh2dBundle, render::camera::{ScalingMode},
 };
+use std::f32::consts::*;
 
 fn main() {
     let mut app = App::new();
@@ -14,11 +15,6 @@ fn main() {
             }),
             ..default()
         }))
-        // .add_systems(
-        //     RunFixedUpdateLoop,
-        //     (
-        //     ),
-        // )
         // .add_systems(
         //     Update,
         //     (
@@ -34,19 +30,20 @@ fn main() {
 struct Player;
 
 fn setup(
-    mut cmd: Commands,
+    mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
+    asset_server: Res<AssetServer>
 ) {
-    cmd.spawn(Camera2dBundle {
+    commands.spawn(Camera2dBundle {
         projection: OrthographicProjection {
-            scaling_mode: ScalingMode::Fixed { width: 1280.0, height: 720.0 },
+            scaling_mode: ScalingMode::WindowSize(1.0),
             ..default()
         },
         ..default()
     });
 
-    cmd.spawn((
+    commands.spawn((
         Player,
     ))
     .insert(MaterialMesh2dBundle {

@@ -19,7 +19,7 @@ opt-level = 3
 
 [dependencies]
 rand = "0.8.5"
-bevy = { version = "0.11" }
+bevy = { version = "0.11", features = ["jpeg"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 bevy = { version = "0.11", features = ["dynamic_linking"] }
