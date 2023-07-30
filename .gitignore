@@ -1,4 +1,5 @@
 /target
 /dist/*
 !/dist/index.html
+!/dist/sound.js
 .DS_Store

@@ -21,53 +21,101 @@
             outline: none;
         }
 
-        #click-wrapper {
-            height: 100%;
-            width: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-        }
-
-        #click-to-start {
-            font-size: calc(4vw + 4vh + 10px);
-            font-family: sans-serif;
-            color: white;
-            pointer-events: hover;
-            font-weight: bold;
-        }
-
-        #click-to-start:hover {
-            color: yellow;
+        progress {
+            margin: auto;
         }
     </style>
 </head>
 
 <body>
-    <div id="click-wrapper">
-        <div id="click-to-start">Play</div>
-    </div>
+    <script src="sound.js"></script>
+
+    <progress value="0" min="0" max="100">0%</progress>
 
     <script type="module">
-        import init from './game.js'
+        const oldFetch = window.fetch
 
-        const start = () => {
-            document.getElementById("click-wrapper").remove()
+        function getFilename(resource) {
+            const pathname = (typeof resource === 'string')
+                ? resource
+                : (resource instanceof URL)
+                    ? resource.pathname
+                    : '';
 
-            init()
-            function auto_focus() {
-                let canvas = document.getElementsByTagName('canvas')
-                if (!canvas.length) {
-                    setTimeout(auto_focus, 100)
-                } else {
-                    canvas[0].focus()
-                }
-            }
-            auto_focus()
+            const parts = pathname.split('/');
+
+            return parts[parts.length - 1];
         }
 
-        document.getElementById("click-wrapper").addEventListener("click", start)
+        // `progressiveFetch` is a wrapper over `window.fetch`. It allows you to insert middle-ware that is
+        // polled as the fetch completes. See bevy-website/issues/338 for details.
+        async function progressiveFetch(resource, callbacks={}) {
+            const filename = getFilename(resource);
+            const cb = Object.assign({
+                start: (params) => {},
+                update: (params) => {},
+                finish: (params) => {},
+            }, callbacks);
+
+            let response = await oldFetch(resource);
+            const lengthBytes = response.headers.get('content-length') || 1024 * 1024 * 80;
+            let loadedBytes = 0;
+
+            function update() {
+                const loaded = Math.min(1.0, loadedBytes / lengthBytes);
+                const loadedPercent = loaded * 100.0;
+                const isIndeterminate = loadedBytes > lengthBytes; // Some compression is going on, so we can't know the real progress
+
+                cb.update({ filename, isIndeterminate, loaded, loadedPercent, loadedBytes, lengthBytes });
+            }
+
+            const transform = new TransformStream({
+                start() {
+                    cb.start({ filename, lengthBytes });
+                },
+                transform(chunk, controller) {
+                    loadedBytes += chunk.byteLength;
+                    update();
+                    controller.enqueue(chunk);
+                },
+                flush() {
+                    update();
+                    cb.finish({ filename, lengthBytes });
+                },
+            });
+
+            return new Response(response.body.pipeThrough(transform), response);
+        }
+
+        let progress = document.getElementsByTagName('progress')[0]
+
+        async function loadingBarFetch(resource) {
+            return progressiveFetch(resource, {
+                start: ({ filename }) => {
+                    progress.style.display = 'block'
+                },
+                update: ({ isIndeterminate, loadedPercent }) => {
+                    progress.setAttribute('value', loadedPercent)
+                    progress.textContent = Math.round(loadedPercent) + '%'
+                },
+                finish: () => {
+                    progress.style.display = 'none'
+                }
+            })
+        }
+
+        window.fetch = loadingBarFetch
+
+
+        import init from './game.js'
+
+        init()
+
+        document.addEventListener('keydown', (e) => {
+            let canvas = document.getElementsByTagName('canvas')[0]
+            canvas.focus()
+            canvas.dispatchEvent(new KeyboardEvent('keydown', e))
+        }, { once: true })
     </script>
 </body>
 

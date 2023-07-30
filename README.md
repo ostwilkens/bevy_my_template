@@ -1,3 +1,5 @@
 todo:
 - offline web build deploy
-- basic states
+- click sound effect
+- hover sound effect
+- basic sound effects (click, blip etc)
