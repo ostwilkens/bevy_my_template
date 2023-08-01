@@ -2,7 +2,6 @@ use bevy::{
     app::AppExit,
     asset::ChangeWatcher,
     audio::{PlaybackMode, Volume, VolumeLevel},
-    ecs::system::EntityCommands,
     prelude::*,
     render::camera::ScalingMode,
 };
@@ -18,8 +17,8 @@ mod mute;
 mod button;
 
 static PRIMARY_COLOR_HUE: f32 = 0.5;
-static MENU_MUSIC_VOLUME: f32 = 0.4;
-static PLAYING_MUSIC_VOLUME: f32 = 0.67;
+static MENU_MUSIC_VOLUME: f32 = 0.36;
+static PLAYING_MUSIC_VOLUME: f32 = 0.66;
 
 fn main() {
     let mut app = App::new();
