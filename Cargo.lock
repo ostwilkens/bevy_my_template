@@ -580,6 +580,34 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy_eventlistener"
+version = "0.2.1"
+source = "git+https://github.com/aevyrie/bevy_eventlistener.git?rev=4d8de4c#4d8de4c9f715d0dda4f355ba2e5b3a275d6c2c10"
+dependencies = [
+ "bevy_eventlistener_core",
+ "bevy_eventlistener_derive",
+]
+
+[[package]]
+name = "bevy_eventlistener_core"
+version = "0.2.1"
+source = "git+https://github.com/aevyrie/bevy_eventlistener.git?rev=4d8de4c#4d8de4c9f715d0dda4f355ba2e5b3a275d6c2c10"
+dependencies = [
+ "bevy",
+]
+
+[[package]]
+name = "bevy_eventlistener_derive"
+version = "0.2.1"
+source = "git+https://github.com/aevyrie/bevy_eventlistener.git?rev=4d8de4c#4d8de4c9f715d0dda4f355ba2e5b3a275d6c2c10"
+dependencies = [
+ "bevy_eventlistener_core",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.26",
+]
+
+[[package]]
 name = "bevy_gilrs"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -762,11 +790,34 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy_mod_picking"
+version = "0.14.0"
+source = "git+https://github.com/bardt/bevy_mod_picking.git?rev=7ecb60e08735ce82f9ff03ba5adb434c1e336afd#7ecb60e08735ce82f9ff03ba5adb434c1e336afd"
+dependencies = [
+ "bevy",
+ "bevy_eventlistener",
+ "bevy_picking_core",
+ "bevy_picking_input",
+ "bevy_picking_raycast",
+]
+
+[[package]]
+name = "bevy_mod_raycast"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fd40e4a4a6383d4d376aaa7c0ee6b837ec1b7317965d3afb6fcd7d385b25f138"
+dependencies = [
+ "arrayvec",
+ "bevy",
+]
+
+[[package]]
 name = "bevy_my_template"
 version = "0.1.0"
 dependencies = [
  "bevy",
  "bevy-inspector-egui",
+ "bevy_mod_picking",
  "bevy_screen_diagnostics",
  "rand",
 ]
@@ -792,6 +843,34 @@ dependencies = [
  "bytemuck",
  "naga_oil",
  "radsort",
+]
+
+[[package]]
+name = "bevy_picking_core"
+version = "0.3.0"
+source = "git+https://github.com/bardt/bevy_mod_picking.git?rev=7ecb60e08735ce82f9ff03ba5adb434c1e336afd#7ecb60e08735ce82f9ff03ba5adb434c1e336afd"
+dependencies = [
+ "bevy",
+ "bevy_eventlistener",
+]
+
+[[package]]
+name = "bevy_picking_input"
+version = "0.3.0"
+source = "git+https://github.com/bardt/bevy_mod_picking.git?rev=7ecb60e08735ce82f9ff03ba5adb434c1e336afd#7ecb60e08735ce82f9ff03ba5adb434c1e336afd"
+dependencies = [
+ "bevy",
+ "bevy_picking_core",
+]
+
+[[package]]
+name = "bevy_picking_raycast"
+version = "0.3.0"
+source = "git+https://github.com/bardt/bevy_mod_picking.git?rev=7ecb60e08735ce82f9ff03ba5adb434c1e336afd#7ecb60e08735ce82f9ff03ba5adb434c1e336afd"
+dependencies = [
+ "bevy",
+ "bevy_mod_raycast",
+ "bevy_picking_core",
 ]
 
 [[package]]
