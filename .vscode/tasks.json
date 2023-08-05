@@ -4,6 +4,10 @@
 		{
 			"type": "cargo",
 			"command": "run",
+			"args": [
+				"--features",
+				"dev"
+			],
 			"problemMatcher": [
 				"$rustc",
 				"$rust-panic"
@@ -20,7 +24,9 @@
 			"args": [
 				"--target",
 				"wasm32-unknown-unknown",
-				"--release"
+				"--release",
+				"--features",
+				"dev"
 			],
 			"problemMatcher": [
 				"$rustc"
@@ -31,6 +37,10 @@
 		{
 			"type": "cargo",
 			"command": "build",
+			"args": [
+				"--features",
+				"dev"
+			],
 			"problemMatcher": [
 				"$rustc"
 			],

@@ -25,10 +25,14 @@ bevy = { version = "0.11", features = ["webp"] }
 # bevy_rapier2d = { version = "0.22.0" }
 # bevy_rapier_collider_gen = { git = "https://github.com/CyberTea0X/bevy_rapier_collider_gen.git", branch = "main" }
 bevy_pkv = "0.8.0"
-bevy-inspector-egui = "0.19.0"
+bevy-inspector-egui = { version = "0.19.0", optional = true }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 bevy = { version = "0.11", features = ["dynamic_linking"] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 bevy = { version = "0.11" }
+
+[features]
+default = []
+dev = ["bevy/dynamic_linking", "dep:bevy-inspector-egui"]
