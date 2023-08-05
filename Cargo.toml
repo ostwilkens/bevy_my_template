@@ -35,4 +35,5 @@ bevy = { version = "0.11" }
 
 [features]
 default = []
-dev = ["bevy/dynamic_linking", "dep:bevy-inspector-egui"]
+dev = ["dep:bevy-inspector-egui"]
+dyn = ["bevy/dynamic_linking"]

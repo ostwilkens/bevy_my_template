@@ -8,7 +8,7 @@ use bevy::{
 use button::{interact_button, ButtonCommands};
 use mute::MuteButtonPlugin;
 
-#[cfg(debug_assertions)]
+#[cfg(feature = "dev")]
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 
 mod button;
@@ -61,11 +61,8 @@ fn main() {
         (while_playing,).run_if(in_state(GameState::Playing)),
     );
 
-    if cfg!(debug_assertions) {
-        app.add_plugins(WorldInspectorPlugin::new());
-        // app.add_plugins(ScreenDiagnosticsPlugin::default());
-        // app.add_plugins(ScreenFrameDiagnosticsPlugin);
-    }
+    #[cfg(feature = "dev")]
+    app.add_plugins(WorldInspectorPlugin::new());
 
     app.run();
 }

@@ -16,12 +16,12 @@ rustflags = [
     "-Zshare-generics=y",
 ]
 
-[target.aarch64-apple-darwin]
-rustflags = [
-    "-C",
-    "link-arg=-fuse-ld=/opt/homebrew/opt/llvm/bin/ld64.lld",
-    "-Zshare-generics=y",
-]
+# [target.aarch64-apple-darwin]
+# rustflags = [
+#     "-C",
+#     "link-arg=-fuse-ld=/opt/homebrew/opt/llvm/bin/ld64.lld",
+#     "-Zshare-generics=y",
+# ]
 
 [target.x86_64-pc-windows-msvc]
 linker = "rust-lld.exe"
@@ -31,7 +31,6 @@ rustflags = ["-Zshare-generics=n"]
 # In most cases the gains are negligible, but if you are on macos and have slow compile times you should see significant gains.
 [profile.dev]
 debug = 1
-
 
 [target.wasm32-unknown-unknown]
 runner = "wasm-server-runner"

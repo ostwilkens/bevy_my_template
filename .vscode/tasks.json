@@ -39,7 +39,8 @@
 			"command": "build",
 			"args": [
 				"--features",
-				"dev"
+				"dev",
+				"dyn",
 			],
 			"problemMatcher": [
 				"$rustc"
