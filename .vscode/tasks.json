@@ -15,14 +15,27 @@
 			"label": "run"
 		},
 		{
-            "type": "cargo",
-            "command": "run",
-            "args": ["--target", "wasm32-unknown-unknown", "--release"],
-            "problemMatcher": [
-                "$rustc"
-            ],
-            "group": "none",
-            "label": "wasmrun"
-        },
+			"type": "cargo",
+			"command": "run",
+			"args": [
+				"--target",
+				"wasm32-unknown-unknown",
+				"--release"
+			],
+			"problemMatcher": [
+				"$rustc"
+			],
+			"group": "none",
+			"label": "wasmrun"
+		},
+		{
+			"type": "cargo",
+			"command": "build",
+			"problemMatcher": [
+				"$rustc"
+			],
+			"group": "build",
+			"label": "rust: cargo build"
+		}
 	]
 }

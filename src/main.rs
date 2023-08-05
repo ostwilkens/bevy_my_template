@@ -1,23 +1,19 @@
 use bevy::{
     app::AppExit,
-    asset::{Asset, ChangeWatcher},
     audio::{PlaybackMode, Volume, VolumeLevel},
     prelude::*,
-    reflect::{TypePath, TypeUuid},
     render::camera::ScalingMode,
     time::Stopwatch,
 };
-use bevy_inspector_egui::{
-    prelude::ReflectInspectorOptions, quick::WorldInspectorPlugin, InspectorOptions,
-};
-use bevy_mod_picking::prelude::*;
-use bevy_screen_diagnostics::{ScreenDiagnosticsPlugin, ScreenFrameDiagnosticsPlugin};
 use button::{interact_button, ButtonCommands};
 use mute::MuteButtonPlugin;
-use std::{marker::PhantomData, time::Duration};
+
+#[cfg(debug_assertions)]
+use bevy_inspector_egui::quick::WorldInspectorPlugin;
 
 mod button;
 mod mute;
+mod utils;
 
 static PRIMARY_COLOR_HUE: f32 = 0.5;
 static MENU_MUSIC_VOLUME: f32 = 0.36;
@@ -38,13 +34,12 @@ fn main() {
                 ..default()
             })
             .set(AssetPlugin {
-                watch_for_changes: ChangeWatcher::with_delay(Duration::from_millis(1000)),
+                // watch_for_changes: ChangeWatcher::with_delay(Duration::from_millis(1000)),
                 ..Default::default()
             }),
     )
     .insert_resource(ClearColor(Color::hsl(PRIMARY_COLOR_HUE * 360.0, 0.2, 0.2)))
     .insert_resource(Score(0))
-    .register_type::<PrimaryColorHue>()
     .insert_resource(PrimaryColorHue(PRIMARY_COLOR_HUE))
     .add_plugins(MuteButtonPlugin)
     .add_state::<GameState>()
@@ -53,16 +48,23 @@ fn main() {
     .add_systems(OnExit(GameState::Menu), on_exit_menu)
     .add_systems(OnEnter(GameState::Playing), on_enter_playing)
     .add_systems(OnExit(GameState::Playing), on_exit_playing)
-    .add_systems(Update, (exit_on_esc.run_if(is_desktop), interact_button))
+    .add_systems(
+        Update,
+        (exit_on_esc.run_if(is_desktop), interact_button, always),
+    )
     .add_systems(
         Update,
         (interact_play_button,).run_if(in_state(GameState::Menu)),
+    )
+    .add_systems(
+        Update,
+        (while_playing,).run_if(in_state(GameState::Playing)),
     );
 
     if cfg!(debug_assertions) {
         app.add_plugins(WorldInspectorPlugin::new());
-        app.add_plugins(ScreenDiagnosticsPlugin::default());
-        app.add_plugins(ScreenFrameDiagnosticsPlugin);
+        // app.add_plugins(ScreenDiagnosticsPlugin::default());
+        // app.add_plugins(ScreenFrameDiagnosticsPlugin);
     }
 
     app.run();
@@ -78,9 +80,9 @@ enum GameState {
 #[derive(Component)]
 struct PlayButton;
 
-#[derive(Reflect, Resource, Default, InspectorOptions)]
-#[reflect(Resource, InspectorOptions)]
-pub struct PrimaryColorHue(#[inspector(min = 0.0, max = 1.0)] f32);
+#[derive(Reflect, Resource, Default)]
+#[reflect(Resource)]
+pub struct PrimaryColorHue(f32);
 
 fn is_desktop() -> bool {
     std::env::consts::OS == "macos" || std::env::consts::OS == "windows"
@@ -88,27 +90,6 @@ fn is_desktop() -> bool {
 
 #[derive(Component)]
 struct Music;
-
-#[derive(Resource)]
-struct AssetHandle<T, H>
-where
-    H: TypeUuid + TypePath + Asset,
-{
-    handle: Handle<H>,
-    asset_type: PhantomData<T>,
-}
-
-impl<T, H> AssetHandle<T, H>
-where
-    H: TypeUuid + TypePath + Asset,
-{
-    fn new(handle: Handle<H>) -> Self {
-        Self {
-            handle: handle,
-            asset_type: PhantomData,
-        }
-    }
-}
 
 #[derive(Component)]
 struct ScoreText;
@@ -161,12 +142,9 @@ fn setup(
         }),
     ));
 
-    // circle mesh & material
+    // AssetHandle example
     // commands.insert_resource(AssetHandle::<Circle, ColorMaterial>::new(
     //     materials.add(Color::hsl((PRIMARY_COLOR_HUE - 0.5) * 360.0, 0.7, 0.8).into()),
-    // ));
-    // commands.insert_resource(AssetHandle::<Circle, Mesh>::new(
-    //     meshes.add(shape::Circle::new(70.).into()).into(),
     // ));
 }
 
@@ -266,17 +244,6 @@ fn exit_on_esc(keyboard_input: ResMut<Input<KeyCode>>, mut exit: EventWriter<App
     }
 }
 
-fn on_click_circle(
-    event: Listener<Pointer<Down>>,
-    mut score: ResMut<Score>,
-    mut commands: Commands,
-) {
-    score.0 += 1;
-
-    // despawn clicked circle
-    // commands.entity(event.target).despawn_recursive();
-}
-
 fn update_music_speed(
     music_controller: Query<&AudioSink, With<Music>>,
     sw: Option<Res<GameTime>>,
@@ -304,3 +271,5 @@ fn while_playing(
 ) {
     game_time.0.tick(time.delta());
 }
+
+fn always(time: Res<Time>, mut commands: Commands, mut next_state: ResMut<NextState<GameState>>) {}
