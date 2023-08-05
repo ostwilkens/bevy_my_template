@@ -43,6 +43,7 @@ fn main() {
             }),
     )
     .insert_resource(ClearColor(Color::hsl(PRIMARY_COLOR_HUE * 360.0, 0.2, 0.2)))
+    .insert_resource(Score(0))
     .register_type::<PrimaryColorHue>()
     .insert_resource(PrimaryColorHue(PRIMARY_COLOR_HUE))
     .add_plugins(MuteButtonPlugin)
