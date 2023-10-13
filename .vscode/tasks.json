@@ -6,7 +6,7 @@
 			"command": "run",
 			"args": [
 				"--features",
-				"dev"
+				"inspector,native_dev,dyn"
 			],
 			"problemMatcher": [
 				"$rustc",
@@ -20,26 +20,10 @@
 		},
 		{
 			"type": "cargo",
-			"command": "run",
-			"args": [
-				"--target",
-				"wasm32-unknown-unknown",
-				"--release",
-				"--features",
-				"dev"
-			],
-			"problemMatcher": [
-				"$rustc"
-			],
-			"group": "none",
-			"label": "wasmrun"
-		},
-		{
-			"type": "cargo",
 			"command": "build",
 			"args": [
 				"--features",
-				"dev,dyn",
+				"inspector,native_dev,dyn",
 			],
 			"problemMatcher": [
 				"$rustc"

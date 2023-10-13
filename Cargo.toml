@@ -3,8 +3,6 @@ name = "bevy_my_template" # TODO
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [[bin]]
 name = "game"
 path = "src/main.rs"
@@ -17,23 +15,65 @@ opt-level = 1
 [profile.dev.package."*"]
 opt-level = 3
 
+# Enable LTO for release builds
+[profile.release]
+lto = true
+codegen-units = 1
+
 [dependencies]
 rand = "0.8.5"
-bevy = { version = "0.11", features = ["webp"] }
+bevy-inspector-egui = { version = "0.20.0", optional = true }
+bevy_tweening = "0.8"
 # bevy_screen_diagnostics = "0.3.0"
 # bevy_mod_picking = { version = "0.14.0", default-features = false, features = ["backend_raycast"], git = "https://github.com/bardt/bevy_mod_picking.git", rev = "7ecb60e08735ce82f9ff03ba5adb434c1e336afd" }
 # bevy_rapier2d = { version = "0.22.0" }
 # bevy_rapier_collider_gen = { git = "https://github.com/CyberTea0X/bevy_rapier_collider_gen.git", branch = "main" }
 # bevy_pkv = "0.8.0"
-bevy-inspector-egui = { version = "0.19.0", optional = true }
 
-[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-bevy = { version = "0.11", features = ["dynamic_linking"] }
+[dependencies.bevy]
+version = "0.11.3"
+default-features = false
+features = [
+    "android_shared_stdcxx", # Enable using a shared stdlib for cxx on Android
+    "animation",             # Provides animation functionality
+    "bevy_asset",            # Provides asset functionality
+    "bevy_audio",            # Provides audio functionality
+    "bevy_core_pipeline",    # Provides cameras and other basic render pipeline features
+    "bevy_gilrs",            # Adds gamepad support
+    "bevy_gizmos",           # Adds support for rendering gizmos
+    "bevy_gltf",             # glTF support
+    "bevy_pbr",              # Adds PBR rendering
+    "bevy_render",           # Provides rendering functionality
+    "bevy_scene",            # Provides scene functionality
+    "bevy_sprite",           # Provides sprite functionality
+    "bevy_text",             # Provides text functionality
+    "bevy_ui",               # A custom ECS-driven UI framework
+    "bevy_winit",            # winit window and input backend
+    "default_font",          # Include a default font, containing only ASCII characters, at the cost of a 20kB binary size increase
+    "hdr",                   # HDR image format support
+    "ktx2",                  # KTX2 compressed texture support
+    "multi-threaded",        # Enables multithreaded parallelism in the engine. Disabling it forces all engine tasks to run on a single thread.
+    "png",                   # PNG image format support
+    "tonemapping_luts",      # Include tonemapping Look Up Tables KTX2 files
+    "vorbis",                # OGG/VORBIS audio format support
+    "webgl2",                # Enable some limitations to be able to use WebGL2. If not enabled, it will default to WebGPU in Wasm
+    "x11",                   # X11 display server support
+    "zstd",                  # For KTX2 supercompression
+
+    # optional:
+    "webp",
+]
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-bevy = { version = "0.11" }
+web-sys = { version = "0.3.64", features = [
+    "CustomEvent",
+    "CustomEventInit",
+    "EventTarget",
+    "Window",
+] }
 
 [features]
 default = []
-dev = ["dep:bevy-inspector-egui"]
+inspector = ["dep:bevy-inspector-egui"]
+native_dev = ["bevy/filesystem_watcher"]
 dyn = ["bevy/dynamic_linking"]

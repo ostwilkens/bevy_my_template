@@ -1,12 +1,12 @@
-use bevy::{asset::Asset, prelude::*, reflect::*};
+use bevy::{asset::Asset, prelude::*, reflect::*, app::AppExit};
 use std::marker::PhantomData;
 
 #[derive(Resource)]
-struct AssetHandle<T, H>
+pub struct AssetHandle<T, H>
 where
     H: TypeUuid + TypePath + Asset,
 {
-    handle: Handle<H>,
+    pub handle: Handle<H>,
     asset_type: PhantomData<T>,
 }
 
@@ -14,10 +14,22 @@ impl<T, H> AssetHandle<T, H>
 where
     H: TypeUuid + TypePath + Asset,
 {
-    fn new(handle: Handle<H>) -> Self {
+    pub fn new(handle: Handle<H>) -> Self {
         Self {
             handle: handle,
             asset_type: PhantomData,
         }
+    }
+}
+
+pub fn is_desktop() -> bool {
+    std::env::consts::OS == "macos"
+        || std::env::consts::OS == "windows"
+        || std::env::consts::OS == "linux"
+}
+
+pub fn exit_on_esc(keyboard_input: ResMut<Input<KeyCode>>, mut exit: EventWriter<AppExit>) {
+    if keyboard_input.just_pressed(KeyCode::Escape) {
+        exit.send(AppExit);
     }
 }
