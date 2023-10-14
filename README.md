@@ -5,7 +5,8 @@
 
 ## trunk version that supports polling on windows
 `cargo install --git https://github.com/ctron/trunk --branch feature/add_poll_1 trunk`
-`trunk serve --poll --poll-interval 1s --address 0.0.0.0`
+macos dev serve: `trunk serve`
+windows dev serve: `trunk serve --poll --poll-interval 1s --address 0.0.0.0`
 
 todo:
 - single-file windows builds

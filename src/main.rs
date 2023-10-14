@@ -4,15 +4,18 @@
 use bevy::{
     math::vec3,
     prelude::*,
-    render::camera::ScalingMode,
+    render::{camera::ScalingMode, mesh::Indices, render_resource::PrimitiveTopology},
     window::{PrimaryWindow, WindowResized},
 };
 #[cfg(feature = "inspector")]
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
+use bevy_mod_picking::prelude::*;
 use bevy_tweening::{lens::*, *};
 // use button::interact_button;
 use default_font::{DefaultFont, DefaultFontPlugin};
 use framerate::{FramerateIsStable, FramerateMonitorPlugin};
+// use text_mesh::text_to_mesh;
+use crate::text_to_image::text_to_image;
 use std::{f32::consts::PI, time::Duration};
 use utils::*;
 #[cfg(target_arch = "wasm32")]
@@ -22,6 +25,7 @@ mod button;
 mod default_font;
 mod framerate;
 mod mute;
+mod text_to_image;
 mod utils;
 #[cfg(target_arch = "wasm32")]
 mod web_event;
@@ -51,6 +55,7 @@ fn main() {
     // default_plugins.set(AssetPlugin::processed_dev());
 
     app.add_plugins(default_plugins);
+    // app.add_plugins(DefaultPickingPlugins);
     app.add_plugins(TweeningPlugin);
     app.add_plugins(FramerateMonitorPlugin);
     app.add_plugins(DefaultFontPlugin {
@@ -70,8 +75,11 @@ fn main() {
         (pre_load_setup, load_assets).chain(),
     );
     // app.add_systems(Update, interact_button);
+    app.add_systems(
+        OnExit(GameState::Loading),
+        (spawn_background, apply_deferred, spawn_menu_buttons).chain(),
+    );
     app.add_systems(OnExit(GameState::Loading), setup);
-    app.add_systems(OnExit(GameState::Loading), spawn_background);
     // app.add_systems(OnEnter(GameState::Menu), on_enter_menu);
     // app.add_systems(OnExit(GameState::Menu), on_exit_menu);
     // app.add_systems(OnEnter(GameState::Playing), on_enter_playing);
@@ -81,7 +89,7 @@ fn main() {
     //     (interact_play_button,).run_if(in_state(GameState::Menu)),
     // );
     app.add_systems(Update, resize_background_plane);
-    
+
     #[cfg(not(target_arch = "wasm32"))]
     app.add_systems(Update, exit_on_esc);
 
@@ -101,9 +109,6 @@ enum GameState {
     Menu,
     Playing,
 }
-
-#[derive(Component)]
-struct PlayButton;
 
 #[derive(Reflect, Resource, Default)]
 #[reflect(Resource)]
@@ -149,20 +154,63 @@ fn resize_background_plane(
 #[derive(Component)]
 struct BackgroundPlane;
 
+#[derive(Component)]
+struct PlayButton;
+
 fn load_assets(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut meshes: ResMut<Assets<Mesh>>,
+    mut images: ResMut<Assets<Image>>,
     mut standard_materials: ResMut<Assets<StandardMaterial>>,
 ) {
     commands.insert_resource(AssetHandle::<DefaultFont, Font>::new(
         asset_server.load("Nunito-Regular.ttf"),
     ));
 
-    commands.insert_resource(AssetHandle::<BackgroundPlane, StandardMaterial>::new(
+    // let mut button_mesh = Mesh::new(PrimitiveTopology::TriangleList);
+    // // Add vertices for one face of the box
+    // button_mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, vec![
+    //     [0.0, 0.0, 0.0],
+    //     [1.0, 0.0, 0.0],
+    //     [1.0, 1.0, 0.0],
+    //     [0.0, 1.0, 0.0],
+    // ]);
+    // // Add indices for one face of the box
+    // button_mesh.set_indices(Some(Indices::U32(vec![0, 1, 2, 2, 3, 0])));
+    // // Add UV coordinates for one face of the box
+    // button_mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, vec![
+    //     [0.0, 0.0],
+    //     [1.0, 0.0],
+    //     [1.0, 1.0],
+    //     [0.0, 1.0],
+    // ]);
+
+    let mut button_mesh = Mesh::from(shape::Box::new(2.0, 1.0, 0.2));
+
+    if let Some(uv_attributes) = button_mesh.attribute(Mesh::ATTRIBUTE_UV_0) {
+        match uv_attributes {
+            bevy::render::mesh::VertexAttributeValues::Float32x2(vec) => {
+                button_mesh.insert_attribute(
+                    Mesh::ATTRIBUTE_UV_0,
+                    vec
+                );
+
+                info!("hehu");
+            }
+            _ => {
+                panic!("unexpected vertex attribute type");
+            }
+        }
+    }
+
+    commands.insert_resource(AssetHandle::<PlayButton, Mesh>::new(
+        // meshes.add(Mesh::from(shape::Box::new(2.0, 1.0, 0.2))),
+        meshes.add(Mesh::from(button_mesh)),
+    ));
+    commands.insert_resource(AssetHandle::<PlayButton, StandardMaterial>::new(
         standard_materials.add(StandardMaterial {
-            base_color: Color::hsl(PRIMARY_COLOR_HUE * 360.0, 0.2, 0.2),
-            unlit: true,
+            base_color_texture: Some(images.add(text_to_image("Play"))),
             ..default()
         }),
     ));
@@ -173,6 +221,13 @@ fn load_assets(
             subdivisions: 0,
         }),
     )));
+    commands.insert_resource(AssetHandle::<BackgroundPlane, StandardMaterial>::new(
+        standard_materials.add(StandardMaterial {
+            base_color: Color::hsl(PRIMARY_COLOR_HUE * 360.0, 0.2, 0.2),
+            unlit: true,
+            ..default()
+        }),
+    ));
 
     // pbr precompilation mesh, to avoid lag spike when spawning first pbr object
     commands.spawn(PbrBundle {
@@ -263,13 +318,42 @@ fn spawn_background(
         });
 }
 
-fn setup(
+fn spawn_menu_buttons(
     mut commands: Commands,
-    background_plane_material: Res<AssetHandle<BackgroundPlane, StandardMaterial>>,
-    background_plane_mesh: Res<AssetHandle<BackgroundPlane, Mesh>>,
-    q_window: Query<&Window, With<PrimaryWindow>>,
+    play_button_material: Res<AssetHandle<PlayButton, StandardMaterial>>,
+    play_button_mesh: Res<AssetHandle<PlayButton, Mesh>>,
+    q_background_plane_parent: Query<&Parent, With<BackgroundPlane>>,
 ) {
+    let background_plane_parent = q_background_plane_parent.single();
+
+    commands
+        .entity(background_plane_parent.get())
+        .with_children(|parent| {
+            parent.spawn((
+                PlayButton,
+                PbrBundle {
+                    mesh: play_button_mesh.handle.clone(),
+                    material: play_button_material.handle.clone(),
+                    transform: Transform::from_translation(vec3(0.0, 0.0, 0.0))
+                        .with_rotation(Quat::from_euler(EulerRot::XYZ, -0.2, 0.5, 0.0)),
+                    ..default()
+                },
+            ));
+        });
+}
+
+fn setup(mut commands: Commands) {
     info!("setup()");
+
+    commands.spawn(DirectionalLightBundle {
+        transform: Transform::from_xyz(0.5, 1.0, 1.0).looking_at(Vec3::ZERO, Vec3::Y),
+        directional_light: DirectionalLight {
+            color: Color::WHITE,
+            illuminance: 50000.0,
+            ..default()
+        },
+        ..default()
+    });
 
     // // music
     // commands.spawn((

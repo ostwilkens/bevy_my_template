@@ -24,8 +24,12 @@ codegen-units = 1
 rand = "0.8.5"
 bevy-inspector-egui = { version = "0.20.0", optional = true }
 bevy_tweening = "0.8"
-# bevy_screen_diagnostics = "0.3.0"
+bevy_mod_picking = { version = "0.15.0" }
+imageproc = { version = "0.23.0" }
+rusttype = { version = "0.9.3" }
+image = "0.24.7"
 # bevy_mod_picking = { version = "0.14.0", default-features = false, features = ["backend_raycast"], git = "https://github.com/bardt/bevy_mod_picking.git", rev = "7ecb60e08735ce82f9ff03ba5adb434c1e336afd" }
+# bevy_screen_diagnostics = "0.3.0"
 # bevy_rapier2d = { version = "0.22.0" }
 # bevy_rapier_collider_gen = { git = "https://github.com/CyberTea0X/bevy_rapier_collider_gen.git", branch = "main" }
 # bevy_pkv = "0.8.0"
