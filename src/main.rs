@@ -132,7 +132,7 @@ fn pre_load_setup(mut commands: Commands) {
 
 fn background_scale_from_window_size(width: f32, height: f32) -> Vec3 {
     let aspect_ratio = width / height;
-    let margin = 0.01;
+    let margin = 0.04;
     let new_plane_height = WINDOW_WORLD_HEIGHT + margin; // the camera is already scaled to this height
     let new_plane_width = new_plane_height * aspect_ratio + margin;
     Vec3::new(new_plane_height, 1.0, new_plane_width)
@@ -157,6 +157,44 @@ struct BackgroundPlane;
 #[derive(Component)]
 struct PlayButton;
 
+fn button_mesh(shape: shape::Box) -> Mesh {
+    // turn the box into a mesh, modifying uv to only use part of the texture on sides other than the front
+
+    let mut mesh = Mesh::from(shape);
+
+    mesh.insert_attribute(
+        Mesh::ATTRIBUTE_UV_0,
+        vec![
+            [0.0, 0.0],
+            [1.0, 0.0],
+            [1.0, 1.0],
+            [0.0, 1.0],
+            [0.1, 0.0],
+            [0.0, 0.0],
+            [0.0, 0.1],
+            [0.1, 0.1],
+            [0.0, 0.0],
+            [0.1, 0.0],
+            [0.1, 0.1],
+            [0.0, 0.1],
+            [0.1, 0.0],
+            [0.0, 0.0],
+            [0.0, 0.1],
+            [0.1, 0.1],
+            [0.1, 0.0],
+            [0.0, 0.0],
+            [0.0, 0.1],
+            [0.1, 0.1],
+            [0.0, 0.0],
+            [0.1, 0.0],
+            [0.1, 0.1],
+            [0.0, 0.1],
+        ],
+    );
+
+    mesh
+}
+
 fn load_assets(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
@@ -168,45 +206,8 @@ fn load_assets(
         asset_server.load("Nunito-Regular.ttf"),
     ));
 
-    // let mut button_mesh = Mesh::new(PrimitiveTopology::TriangleList);
-    // // Add vertices for one face of the box
-    // button_mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, vec![
-    //     [0.0, 0.0, 0.0],
-    //     [1.0, 0.0, 0.0],
-    //     [1.0, 1.0, 0.0],
-    //     [0.0, 1.0, 0.0],
-    // ]);
-    // // Add indices for one face of the box
-    // button_mesh.set_indices(Some(Indices::U32(vec![0, 1, 2, 2, 3, 0])));
-    // // Add UV coordinates for one face of the box
-    // button_mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, vec![
-    //     [0.0, 0.0],
-    //     [1.0, 0.0],
-    //     [1.0, 1.0],
-    //     [0.0, 1.0],
-    // ]);
-
-    let mut button_mesh = Mesh::from(shape::Box::new(2.0, 1.0, 0.2));
-
-    if let Some(uv_attributes) = button_mesh.attribute(Mesh::ATTRIBUTE_UV_0) {
-        match uv_attributes {
-            bevy::render::mesh::VertexAttributeValues::Float32x2(vec) => {
-                button_mesh.insert_attribute(
-                    Mesh::ATTRIBUTE_UV_0,
-                    vec
-                );
-
-                info!("hehu");
-            }
-            _ => {
-                panic!("unexpected vertex attribute type");
-            }
-        }
-    }
-
     commands.insert_resource(AssetHandle::<PlayButton, Mesh>::new(
-        // meshes.add(Mesh::from(shape::Box::new(2.0, 1.0, 0.2))),
-        meshes.add(Mesh::from(button_mesh)),
+        meshes.add(button_mesh(shape::Box::new(2.0, 1.0, 0.4))),
     ));
     commands.insert_resource(AssetHandle::<PlayButton, StandardMaterial>::new(
         standard_materials.add(StandardMaterial {
@@ -279,7 +280,7 @@ fn spawn_background(
 
     let background_tween_scale = Tween::new(
         EaseFunction::ExponentialOut,
-        Duration::from_secs_f32(1.7),
+        Duration::from_secs_f32(1.7 * 0.5),
         TransformScaleLens {
             start: Vec3::splat(0.0001),
             end: Vec3::splat(1.0),
@@ -288,7 +289,7 @@ fn spawn_background(
 
     let background_tween_rot = Tween::new(
         EaseFunction::ExponentialOut,
-        Duration::from_secs_f32(1.1),
+        Duration::from_secs_f32(1.1 * 0.5),
         TransformRotationLens {
             start: Quat::from_euler(EulerRot::XYZ, 0.0, 0.0, -PI / 2.0),
             end: Quat::from_euler(EulerRot::XYZ, 0.0, 0.0, 0.0),
@@ -306,7 +307,7 @@ fn spawn_background(
                 PbrBundle {
                     mesh: background_plane_mesh.handle.clone(),
                     material: background_plane_material.handle.clone(),
-                    transform: Transform::from_translation(vec3(0.0, 0.0, -1.0))
+                    transform: Transform::from_translation(vec3(0.0, 0.0, -10.0))
                         .with_rotation(Quat::from_euler(EulerRot::XYZ, 0.0, PI * 0.5, PI * 0.5))
                         .with_scale(background_scale_from_window_size(
                             window.width(),
@@ -318,6 +319,36 @@ fn spawn_background(
         });
 }
 
+// impl Tweenable for Duration {
+//     fn tween(&self, _ease: EaseFunction, _elapsed: Duration, _duration: Duration) -> Self {
+//         *self
+//     }
+// }
+
+// #[derive(Component)]
+// struct Dummy;
+
+// impl Tweenable< for Dummy {
+//     fn tween(&self, _ease: EaseFunction, _elapsed: Duration, _duration: Duration) -> Self {
+//         *self
+//     }
+// }
+
+// #[derive(Debug, Copy, Clone, PartialEq)]
+// struct DummyLens;
+
+// impl Lens<Dummy> for DummyLens {
+//     fn lerp(&mut self, _: &mut Dummy, _: f32) {}
+// }
+
+// fn tween_wait(seconds: f32) -> Tween<Dummy> {
+//     Tween::new(
+//         EaseFunction::QuadraticIn,
+//         Duration::from_secs_f32(seconds),
+//         DummyLens,
+//     )
+// }
+
 fn spawn_menu_buttons(
     mut commands: Commands,
     play_button_material: Res<AssetHandle<PlayButton, StandardMaterial>>,
@@ -326,16 +357,29 @@ fn spawn_menu_buttons(
 ) {
     let background_plane_parent = q_background_plane_parent.single();
 
+    let tween_scale = Tween::new(
+        EaseFunction::BounceOut,
+        Duration::from_secs_f32(0.8),
+        TransformScaleLens {
+            start: Vec3::splat(0.0),
+            end: Vec3::splat(1.0),
+        },
+    );
+
+    let animator = Animator::new(Delay::new(Duration::from_secs_f32(0.2)).then(tween_scale));
+
     commands
         .entity(background_plane_parent.get())
         .with_children(|parent| {
             parent.spawn((
+                animator,
                 PlayButton,
                 PbrBundle {
                     mesh: play_button_mesh.handle.clone(),
                     material: play_button_material.handle.clone(),
-                    transform: Transform::from_translation(vec3(0.0, 0.0, 0.0))
-                        .with_rotation(Quat::from_euler(EulerRot::XYZ, -0.2, 0.5, 0.0)),
+                    transform: Transform::from_translation(vec3(0.0, 0.0, -5.0))
+                        .with_rotation(Quat::from_euler(EulerRot::XYZ, PI * 0.75, PI, PI * 1.125))
+                        .with_scale(Vec3::splat(0.0)),
                     ..default()
                 },
             ));
