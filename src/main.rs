@@ -5,7 +5,7 @@ use bevy::{
     math::vec3,
     prelude::*,
     render::{camera::ScalingMode, mesh::Indices, render_resource::PrimitiveTopology},
-    window::{PrimaryWindow, WindowResized},
+    window::{PrimaryWindow, WindowResized}, input::keyboard,
 };
 #[cfg(feature = "inspector")]
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
@@ -80,6 +80,7 @@ fn main() {
         (spawn_background, apply_deferred, spawn_menu_buttons).chain(),
     );
     app.add_systems(OnExit(GameState::Loading), setup);
+    app.add_systems(Update, keyboard_animation_control);
     // app.add_systems(OnEnter(GameState::Menu), on_enter_menu);
     // app.add_systems(OnExit(GameState::Menu), on_exit_menu);
     // app.add_systems(OnEnter(GameState::Playing), on_enter_playing);
@@ -195,6 +196,9 @@ fn button_mesh(shape: shape::Box) -> Mesh {
     mesh
 }
 
+#[derive(Component)]
+struct Otter;
+
 fn load_assets(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
@@ -202,6 +206,14 @@ fn load_assets(
     mut images: ResMut<Assets<Image>>,
     mut standard_materials: ResMut<Assets<StandardMaterial>>,
 ) {
+    commands.insert_resource(AssetHandle::<Otter, Scene>::new(
+        asset_server.load("panda.gltf#Scene0"),
+    ));
+
+    commands.insert_resource(AssetHandle::<Otter, AnimationClip>::new(
+        asset_server.load("panda.gltf#Animation3")
+    ));
+
     commands.insert_resource(AssetHandle::<DefaultFont, Font>::new(
         asset_server.load("Nunito-Regular.ttf"),
     ));
@@ -386,8 +398,54 @@ fn spawn_menu_buttons(
         });
 }
 
-fn setup(mut commands: Commands) {
+// fn setup_scene_once_loaded(
+//     mut players: Query<&mut AnimationPlayer>,
+//     otter_animation: Res<AssetHandle<Otter, AnimationClip>>,
+// ) {
+//     for mut player in &mut players {
+//         if player.is_paused() {
+//             player.play(otter_animation.handle.clone()).repeat();
+//         }
+//     }
+// }
+
+fn keyboard_animation_control(
+    keyboard_input: Res<Input<KeyCode>>,
+    mut animation_players: Query<&mut AnimationPlayer>,
+    otter_animation: Res<AssetHandle<Otter, AnimationClip>>,
+) {
+    for mut player in &mut animation_players {
+        if keyboard_input.just_pressed(KeyCode::Space) {
+            player.play(otter_animation.handle.clone()).repeat();
+
+            info!("play!")
+
+            // if player.is_paused() {
+            //     player.resume();
+            // } else {
+            //     player.pause();
+            // }
+        }
+    }
+}
+
+fn setup(
+    mut commands: Commands,
+    otter_scene: Res<AssetHandle<Otter, Scene>>,
+) {
     info!("setup()");
+
+
+    commands.spawn((
+        Otter,
+        SceneBundle {
+            scene: otter_scene.handle.clone(),
+            transform: Transform::from_xyz(0.0, 1.0, -3.0).with_rotation(Quat::from_euler(EulerRot::XYZ, 0.0, 0.0, 0.0)).with_scale(Vec3::splat(3.0)),
+            ..default()
+        }
+    ));
+    
+
 
     commands.spawn(DirectionalLightBundle {
         transform: Transform::from_xyz(0.5, 1.0, 1.0).looking_at(Vec3::ZERO, Vec3::Y),
@@ -398,6 +456,12 @@ fn setup(mut commands: Commands) {
         },
         ..default()
     });
+
+    // // spawn otter
+    // commands.spawn((
+    //     Otter,
+    //     otter_scene,
+    // ));
 
     // // music
     // commands.spawn((
