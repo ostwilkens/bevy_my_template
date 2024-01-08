@@ -1,12 +1,13 @@
 use bevy::{
     app::AppExit,
     audio::{PlaybackMode, Volume, VolumeLevel},
+    log,
     prelude::*,
     render::camera::ScalingMode,
     time::Stopwatch,
 };
 use button::{interact_button, ButtonCommands};
-use mute::MuteButtonPlugin;
+use mute::{MuteButtonPlugin, Muted};
 
 #[cfg(feature = "dev")]
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
@@ -50,7 +51,12 @@ fn main() {
     .add_systems(OnExit(GameState::Playing), on_exit_playing)
     .add_systems(
         Update,
-        (exit_on_esc.run_if(is_desktop), interact_button, always),
+        (
+            exit_on_esc.run_if(is_desktop),
+            interact_button,
+            always,
+            assign_base_volume,
+        ),
     )
     .add_systems(
         Update,
@@ -59,6 +65,10 @@ fn main() {
     .add_systems(
         Update,
         (while_playing,).run_if(in_state(GameState::Playing)),
+    )
+    .add_systems(
+        Update,
+        (on_muted_changed).run_if(resource_changed::<Muted>()),
     );
 
     #[cfg(feature = "dev")]
@@ -89,7 +99,20 @@ fn is_desktop() -> bool {
 struct Music;
 
 #[derive(Component)]
+struct BaseVolume(f32);
+
+#[derive(Component)]
 struct ScoreText;
+
+fn assign_base_volume(
+    mut commands: Commands,
+    mut music_controller: Query<(Entity, &mut AudioSink), Added<AudioSink>>,
+) {
+    for (entity, mut sink) in music_controller.iter_mut() {
+        commands.entity(entity).insert(BaseVolume(sink.volume()));
+        log::info!("base volume: {}", sink.volume());
+    }
+}
 
 fn setup(
     mut commands: Commands,
@@ -183,7 +206,7 @@ fn on_enter_playing(
     mut commands: Commands,
     mut score: ResMut<Score>,
     mut q_score_text: Query<&mut Style, With<ScoreText>>,
-    music_controller: Query<&AudioSink, With<Music>>,
+    mut music_controller: Query<(&AudioSink, &mut BaseVolume), With<Music>>,
     // circle_mesh: Res<AssetHandle<Circle, Mesh>>,
     // circle_mat: Res<AssetHandle<Circle, ColorMaterial>>,
 ) {
@@ -199,8 +222,9 @@ fn on_enter_playing(
     commands.insert_resource(GameTime(Stopwatch::new()));
 
     // increase music volume
-    for sink in music_controller.iter() {
+    for (sink, mut base_volume) in music_controller.iter_mut() {
         sink.set_volume(PLAYING_MUSIC_VOLUME);
+        base_volume.0 = PLAYING_MUSIC_VOLUME;
     }
 
     // spawn one circle
@@ -270,3 +294,17 @@ fn while_playing(
 }
 
 fn always(time: Res<Time>, mut commands: Commands, mut next_state: ResMut<NextState<GameState>>) {}
+
+fn on_muted_changed(muted: Res<Muted>, music_controller: Query<(&AudioSink, &BaseVolume)>) {
+    if !muted.is_changed() {
+        return;
+    }
+
+    log::info!("muted changed: {}", muted.0);
+
+    let master_volume: f32 = if muted.0 { 0.0 } else { 1.0 };
+
+    for (sink, base_volume) in music_controller.iter() {
+        sink.set_volume(base_volume.0 * master_volume);
+    }
+}
